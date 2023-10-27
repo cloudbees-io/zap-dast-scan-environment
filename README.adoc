@@ -1,0 +1,90 @@
+= CloudBees action: Scan with ZAP
+
+Use this action to scan a web application with the open-source Zed Attack Proxy (ZAP) dynamic application security testing (DAST) scanner.
+
+== Inputs
+
+[cols="2a,1a,1a,3a",options="header"]
+.Input details
+|===
+
+| Input name
+| Data type
+| Required?
+| Description
+
+| `zap-url`
+| String
+| Yes
+| The ZAP server URL.
+
+| `token`
+| String
+| Yes
+| The ZAP token.
+
+| `environment`
+| String
+| Yes
+| The application environment name.
+
+| `auth-type`
+| String
+| Yes
+| The authorization type. Some examples:
+
+* `+"noauth"+` for no authorization.
+* `+"auth0"+` for OAuth provided by Okta.
+* `+"UsernamePasswordAuth"+` for authorization via username and password.
+
+| `paths`
+| String
+| Yes
+| The application paths to scan.
+
+| `test-path`
+| String
+| Yes
+| The file path to comparison test, which contains known security vulnerabilities.
+
+| `url`
+| String
+| Yes
+| The application URL.
+
+| `context-available`
+| String
+| Yes
+| Either `true` or `false`.
+Defaults to `true`.
+|===
+
+== Usage example
+
+In your YAML file, add:
+
+[source,yaml]
+----
+
+      - name: Scan with ZAP DAST
+        uses: cloudbees-io/zap-dast-scan-environmentt@v1
+        with:
+          zap-url: https://example.com
+          token: ${{ secrets.ZAP_CLIENT_SECRET }}
+          environment: "Staging"
+          auth-type: "auth0"
+          paths: "/example1-path,/example2-path"
+          test-path: "/example3-path"
+          url: "https://test.example.com"
+          context-available: "true"
+----
+
+== License
+
+This code is made available under the 
+link:https://opensource.org/license/mit/[MIT license].
+
+== References
+
+* Learn more about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform-actions/latest/[using actions in CloudBees workflows].
+* Learn about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform/latest/[the CloudBees platform].

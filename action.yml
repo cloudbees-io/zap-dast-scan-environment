@@ -1,0 +1,74 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: action
+name: zap
+inputs:
+  zap-url:
+    required: true
+  token:
+    required: true
+  environment:
+    required: true
+  paths:
+    required: true
+  exclude-from-context-regexes:
+    required: false
+  include-in-context-regexes:
+    required: false
+  context-available:
+    required: true
+  url:
+    required: true
+  auth-type:
+    required: true
+  app-username-form-field-name:
+    description: "Field name of username field"
+  app-password-form-field-name:
+    description: "Field name of password field"
+  app-username:
+    description: "Application username"
+  app-password:
+    description: "Application password"
+  redirect-uri:
+    required: false
+  logged-in-indicator:
+    required: false
+  login-hostname:
+    required: false
+  logged-out-indicator:
+    required: false
+  first-get-uri:
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - id: zap
+      name: zap
+      uses: docker://registry.saas-dev.beescloud.com/staging/compliance-zap:main-25386d6aff37bcffa6237aa4cea679b1fcd7912a
+      shell: bash
+      env:
+        RUN_ID: ${{ cloudbees.run_id }}
+        JOB_ID: ${{ job.id }}
+        STEP_ID: ${{ step.internal.id }}
+        DNS_URL: ${{ cloudbees.api.url }}
+        JWT_TOKEN: ${{ cloudbees.api.token }}
+        NO_AUTH_CONFIG_JSON: '{\"metaInfo\":{\"url\":\"${{ inputs.zap-url }}\",\"username\":\"NA\",\"password\":\"NA\",\"client_secret\":\"${{ inputs.token }}\",\"toolName\":\"zap\",\"attributes\":{\"sub_attributes\":{\"owaspzap_context\":{\"environment\":\"${{ inputs.environment }}\",\"context\":{\"authType\":\"NoAuth\",\"paths\":\"${{ inputs.paths }}\",\"contextAvailable\":\"${{ inputs.context-available }}\"},\"url\":\"${{ inputs.url }}\"}}}},\"orchestratorInfo\":{\"assetType\":\"CORE\",\"assetIdentifier\":\"NA\",\"profileIdentifier\":\"NA\"},\"metaInformation\":{\"actor\":\"NA\",\"commit_id\":\"NA\",\"tenent_info\":\"NA\",\"scanner_type\":\"DAST\",\"pipeline_info\":{\"id\":\"04612\",\"name\":\"test_pipeline\",\"step_id\":\"04612_test_pipeline\"}}}'
+        USERNAME_PASSWORD_AUTH_CONFIG_JSON: '{\"metaInfo\":{\"url\":\"${{ inputs.zap-url }}\",\"username\":\"NA\",\"password\":\"NA\",\"client_secret\":\"${{ inputs.token }}\",\"toolName\":\"zap\",\"attributes\":{\"sub_attributes\":{\"owaspzap_context\":{\"environment\":\"${{ inputs.environment }}\",\"context\":{\"authType\":\"UsernamePasswordAuth\",\"paths\":\"${{ inputs.paths }}\",\"excludeFromContextRegexes\":\"${{ inputs.exclude-from-context-regexes }}\",\"includeInContextRegexes\":\"${{ inputs.include-in-context-regexes }}\",\"credentials\":{\"password\":\"${{ inputs.app-password }}\",\"userNameFormFieldName\":\"${{ inputs.app-username-form-field-name }}\",\"passwordFormFieldName\":\"${{ inputs.app-password-form-field-name }}\",\"username\":\"${{ inputs.app-username }}\"},\"contextAvailable\":\"${{ inputs.context-available }}\"},\"url\":\"${{ inputs.url }}\"}}}},\"orchestratorInfo\":{\"assetType\":\"CORE\",\"assetIdentifier\":\"NA\",\"profileIdentifier\":\"NA\"},\"metaInformation\":{\"actor\":\"NA\",\"commit_id\":\"NA\",\"tenent_info\":\"NA\",\"scanner_type\":\"DAST\",\"pipeline_info\":{\"id\":\"04612\",\"name\":\"test_pipeline\",\"step_id\":\"04612_test_pipeline\"}}}'
+        AUTH0_CONFIG_JSON: '{\"metaInfo\":{\"url\":\"${{ inputs.zap-url }}\",\"username\":\"NA\",\"password\":\"NA\",\"client_secret\":\"${{ inputs.token }}\",\"toolName\":\"zap\",\"attributes\":{\"sub_attributes\":{\"owaspzap_context\":{\"environment\":\"${{ inputs.environment }}\",\"context\":{\"authType\":\"Auth0\",\"paths\":\"${{ inputs.paths }}\",\"excludeFromContextRegexes\":\"${{ inputs.exclude-from-context-regexes }}\",\"redirectURI\":\"${{ inputs.redirect-uri }}\",\"loggedInIndicator\":\"${{ inputs.logged-in-indicator }}\",\"includeInContextRegexes\":\"${{ inputs.include-in-context-regexes }}\",\"contextAvailable\":\"${{ inputs.context-available }}\",\"loginHostname\":\"${{ inputs.login-hostname }}\",\"loggedOutIndicator\":\"${{ inputs.logged-out-indicator }}\",\"firstGetURI\":\"${{ inputs.first-get-uri }}\"},\"url\":\"${{ inputs.url }}\"}}}},\"orchestratorInfo\":{\"assetType\":\"CORE\",\"assetIdentifier\":\"NA\",\"profileIdentifier\":\"NA\"},\"metaInformation\":{\"actor\":\"NA\",\"commit_id\":\"NA\",\"tenent_info\":\"NA\",\"scanner_type\":\"DAST\",\"pipeline_info\":{\"id\":\"04612\",\"name\":\"test_pipeline\",\"step_id\":\"04612_test_pipeline\"}}}'
+        CONFIG_JSON: ""
+      run: |
+        set -x
+        cd /
+        if [ ${{ inputs.auth-type }} = "noauth" ]
+        then
+          CONFIG_JSON=$NO_AUTH_CONFIG_JSON
+        elif [ ${{ inputs.auth-type }} = "UsernamePasswordAuth" ]
+        then
+          CONFIG_JSON=$USERNAME_PASSWORD_AUTH_CONFIG_JSON
+        else
+          CONFIG_JSON=$AUTH0_CONFIG_JSON
+        fi
+        echo "RUN ID: ${{ cloudbees.run_id }}"
+        echo "Job ID: ${{ job.id }}"
+        echo "Step ID: ${{step.internal.id}}"
+        /bin/bash -c "java -jar ./executables/zap.jar & while ! nc -z localhost 5001; do sleep 1; done && ./executables/orchestrator -scanConfig \"${CONFIG_JSON}\" execute-analyser"
