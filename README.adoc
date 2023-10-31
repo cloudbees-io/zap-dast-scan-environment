@@ -31,21 +31,17 @@ Use this action to scan a web application with the open-source Zed Attack Proxy 
 | `auth-type`
 | String
 | Yes
-| The authorization type. Some examples:
+| The authorization type.
+Supported types are:
 
-* `+"noauth"+` for no authorization.
-* `+"auth0"+` for OAuth provided by Okta.
-* `+"UsernamePasswordAuth"+` for authorization via username and password.
+* None (`+"noauth"+`)
+* Username/password (`+"UsernamePasswordAuth"+`)
+* Auth0 (`+"auth0"+`)
 
 | `paths`
 | String
 | Yes
 | The application paths to scan.
-
-| `test-path`
-| String
-| Yes
-| The file path to comparison test, which contains known security vulnerabilities.
 
 | `url`
 | String
@@ -56,27 +52,178 @@ Use this action to scan a web application with the open-source Zed Attack Proxy 
 | String
 | Yes
 | Either `true` or `false`.
-Defaults to `true`.
+Defaults to `false`.
+
+| `app-username-form-field-name`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The form field name of the application username.
+
+| `app-password-form-field-name`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The form field name of the application password.
+
+| `app-username`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The application username.
+
+| `app-password`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The application password.
+
+| `loginPageGetUrl`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The application sign-in page GET URL.
+
+| `loginPageTargetUrl`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+`.
+| The application sign-in page target URL.
+
+| `loggedInIndicator`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+` or `+auth-type: "auth0"+`.
+| The application signed-in indicator.
+
+| `loggedOutIndicator`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+` or `+auth-type: "auth0"+`.
+| The application signed-out indicator.
+
+| `includeInContextRegexes`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+` or `+auth-type: "auth0"+`.
+| The regular expressions to include in context.
+
+| `excludeFromContextRegexes`
+| String
+| Required only if `+auth-type: "UsernamePasswordAuth"+` or `+auth-type: "auth0"+`.
+| The regular expressions to exclude from context.
+
+| `firstGetURI`
+| String
+| Required only if `+auth-type: "auth0"+`.
+| The application sign-in URI.
+
+| `loginHostname`
+| String
+| Required only if `+auth-type: "auth0"+`.
+| The application sign-in hostname.
+
+| `redirectURI`
+| String
+| Required only if `+auth-type: "auth0"+`.
+| The application redirect URI.
+
+| `domain`
+| String
+| Required only if `auth-type: auth0` and `context-available:true`.
+| The ZAP domain.
+
+| `client-id`
+| String
+| Required only if `auth-type: auth0` and `context-available:true`.
+| The ZAP client ID.
+
+| `client-secret`
+| String
+| Required only if `auth-type: auth0` and `context-available:true`.
+| The ZAP client secret.
 |===
 
-== Usage example
+== Usage examples
 
-In your YAML file, add:
+The following display an example of each authorization type in use.
+
+=== No authorization
+
+In the case of `+auth-type: "noauth"+`:
 
 [source,yaml]
 ----
 
-      - name: Scan with ZAP DAST
-        uses: cloudbees-io/zap-dast-scan-environmentt@v1
+      - name: Scan with ZAP noauth
+        uses: cloudbees-io/zap-dast-scan-environment@v1
         with:
           zap-url: https://example.com
           token: ${{ secrets.ZAP_CLIENT_SECRET }}
-          environment: "Staging"
-          auth-type: "auth0"
-          paths: "/example1-path,/example2-path"
-          test-path: "/example3-path"
-          url: "https://test.example.com"
-          context-available: "true"
+          environment: "Development"
+          auth-type: "noauth"
+          paths: "/components"
+          url: "https://url.com"
+          contextAvailable: "false"
+
+----
+
+=== Username/password authorization
+
+In the case of `+auth-type: "UsernamePasswordAuth"+`:
+
+[source,yaml]
+----
+
+      - name: Scan with ZAP user passwd
+        uses: cloudbees-io/zap-dast-scan-environment@v1
+        with:
+          zap_url: "http://zap:8080/"
+          token: ${{ secrets.ZAP_CLIENT_SECRET }}
+          environment: "Development"
+          url: "https://example.io/ui"
+          authType: "UsernamePasswordAuth"
+          paths: "/components,/home,/analytics"
+          contextAvailable: "true"
+          userNameFormFieldName: "username"
+          passwordFormFieldName: "password"
+          username: "riqsvc01"
+          password:  PASSWORD
+          loginPageGetUrl: "https://url.io/ui/api/v1/access/auth/login?_spring_security_remember_me=false"
+          loginPageTargetUrl: "https://uel.io/ui/api/v1/access/auth/login?_spring_security_remember_me=false"
+          loggedInIndicator: "<a href=\"logout.jsp\"></a>"
+          loggedOutIndicator: "LoginForm"
+          includeInContextRegexes: "https://url.io.*"
+          excludeFromContextRegexes: "https://url.io/ui/logout.*"
+
+----
+
+=== Auth0 authorization
+
+[NOTE]
+====
+
+If `contextAvailable: "true"`, then each of the following keywords require a set value:
+
+* `client-id`
+* `domain`
+* `client-secret`
+
+====
+
+In the case of `+auth-type: "auth0"+`:
+
+[source,yaml]
+----
+
+      - name: Scan with ZAP auth0
+        uses: cloudbees-io/zap-dast-scan-environment@v1
+        with:
+          zap_url: "http://url:8080/"
+          token: ${{ secrets.ZAP_TOKEN }}
+          environment: "Development"
+          uth-type: "auth0"
+          paths: "/dashboard,/organisations,/standards"
+          contextAvailable: "false"
+          firstGetURI: "/u/login"
+          loginHostname: "https://url.com"
+          loggedInIndicator: "<a href=\"logout.jsp\"><\\/a>"
+          loggedOutIndicator: "\\\\bLog in to cbcqa to continue to Platform UI\\\\b"
+          redirectURI: "https://url.com/"
+          includeInContextRegexes: "https://url.com.*,https://url.eu.auth0.com.*"
+          excludeFromContextRegexes: "https://accounts.google.com/o/oauth2/auth.*"
+
 ----
 
 == License
