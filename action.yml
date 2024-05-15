@@ -72,3 +72,4 @@ runs:
         echo "Job ID: ${{ job.id }}"
         echo "Step ID: ${{step.internal.id}}"
         /bin/bash -c "java -jar ./executables/zap.jar & while ! nc -z localhost 5001; do sleep 1; done && ./executables/orchestrator -scanConfig \"${CONFIG_JSON}\" execute-analyser"
+
