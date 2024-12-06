@@ -44,8 +44,7 @@ runs:
   steps:
     - id: zap
       name: zap
-      # uses: docker://public.ecr.aws/l7o7z1g8/actions/zap-dast-actions:main-2ec17cdd545edfcd972bffee81459d4af3532475
-      uses: docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/zap-dast-actions:main-c3e43cc3f45574077c946a0048e1a8415232c2b1 
+      uses: docker://public.ecr.aws/l7o7z1g8/actions/zap-dast-actions:main-c3e43cc3f45574077c946a0048e1a8415232c2b1
       shell: bash
       env:
         RUN_ID: ${{ cloudbees.run_id }}
