@@ -44,7 +44,7 @@ runs:
   steps:
     - id: zap
       name: zap
-      uses: docker://public.ecr.aws/l7o7z1g8/actions/zap-dast-actions:main-d243681b11207379a04ed6368c456cd3c34431f2
+      uses: docker://public.ecr.aws/l7o7z1g8/actions/zap-dast-actions:main-b0ba1a97112a8879347f8d115d25c6d7cc7cbf26
       shell: bash
       env:
         RUN_ID: ${{ cloudbees.run_id }}
@@ -72,4 +72,3 @@ runs:
         echo "Job ID: ${{ job.id }}"
         echo "Step ID: ${{step.internal.id}}"
         /bin/bash -c "java -jar ./executables/zap.jar & while ! nc -z localhost 5001; do sleep 1; done && ./executables/orchestrator -scanConfig \"${CONFIG_JSON}\" execute-analyser"
-
